@@ -1,0 +1,315 @@
+{
+  "name": "DNS Automation - Add/Remove Records",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dns",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-add",
+      "name": "Webhook - Add Record",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "dns-add"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dns-remove",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-remove",
+      "name": "Webhook - Remove Record",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 500],
+      "webhookId": "dns-remove"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.action }}",
+              "operation": "equals",
+              "value2": "add"
+            }
+          ]
+        }
+      },
+      "id": "if-add",
+      "name": "IF - Action is Add",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.action }}",
+              "operation": "equals",
+              "value2": "remove"
+            }
+          ]
+        }
+      },
+      "id": "if-remove",
+      "name": "IF - Action is Remove",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "command": "python3 /opt/dns-automation/dns_manager.py add \"={{ $json.body.hostname }}\" \"={{ $json.body.type }}\" \"={{ $json.body.value }}\" \"={{ $json.body.ttl || 3600 }}\"",
+        "options": {}
+      },
+      "id": "execute-add",
+      "name": "Execute - Add DNS Record",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "command": "python3 /opt/dns-automation/dns_manager.py remove \"={{ $json.body.hostname }}\" \"={{ $json.body.type || '' }}\"",
+        "options": {}
+      },
+      "id": "execute-remove",
+      "name": "Execute - Remove DNS Record",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = JSON.parse($input.item.json.stdout);\nreturn {\n  json: result\n};"
+      },
+      "id": "parse-add",
+      "name": "Parse JSON - Add",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = JSON.parse($input.item.json.stdout);\nreturn {\n  json: result\n};"
+      },
+      "id": "parse-remove",
+      "name": "Parse JSON - Remove",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-add",
+      "name": "Respond to Webhook - Add",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-remove",
+      "name": "Respond to Webhook - Remove",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dns-list",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-list",
+      "name": "Webhook - List Records",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 700],
+      "webhookId": "dns-list"
+    },
+    {
+      "parameters": {
+        "command": "python3 /opt/dns-automation/dns_manager.py list",
+        "options": {}
+      },
+      "id": "execute-list",
+      "name": "Execute - List DNS Records",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [450, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = JSON.parse($input.item.json.stdout);\nreturn {\n  json: result\n};"
+      },
+      "id": "parse-list",
+      "name": "Parse JSON - List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 700]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-list",
+      "name": "Respond to Webhook - List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 700]
+    }
+  ],
+  "connections": {
+    "Webhook - Add Record": {
+      "main": [
+        [
+          {
+            "node": "IF - Action is Add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Action is Add": {
+      "main": [
+        [
+          {
+            "node": "Execute - Add DNS Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute - Add DNS Record": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON - Add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON - Add": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Remove Record": {
+      "main": [
+        [
+          {
+            "node": "IF - Action is Remove",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Action is Remove": {
+      "main": [
+        [
+          {
+            "node": "Execute - Remove DNS Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute - Remove DNS Record": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON - Remove",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON - Remove": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Remove",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - List Records": {
+      "main": [
+        [
+          {
+            "node": "Execute - List DNS Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute - List DNS Records": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON - List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON - List": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 3,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
+

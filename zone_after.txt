@@ -1,0 +1,31 @@
+$TTL    3600
+$ORIGIN internal.local.
+@       IN      SOA     ns1.internal.local. admin.internal.local. (
+                        2024010102      ; Serial (incrémenté)
+                        3600            ; Refresh
+                        1800            ; Retry
+                        604800          ; Expire
+                        86400 )         ; Minimum TTL
+
+; Serveurs de noms
+@       IN      NS      ns1.internal.local.
+@       IN      NS      ns2.internal.local.
+
+; Enregistrements A
+ns1     IN      A       192.168.1.10
+ns2     IN      A       192.168.1.11
+www     IN      A       192.168.1.20
+mail    IN      A       192.168.1.25
+server1                         3600    IN    A      192.168.1.30
+server2                         3600    IN    A      192.168.1.31
+
+; Enregistrements CNAME
+ftp     IN      CNAME   www
+api     IN      CNAME   server1
+
+; Enregistrements MX
+@       IN      MX      10      mail.internal.local.
+
+; Enregistrements TXT
+_dmarc                         3600    IN    TXT    "v=DMARC1; p=none"
+
